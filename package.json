@@ -1,0 +1,21 @@
+{
+    "name": "lingohack_back",
+    "version": "1.0.0",
+    "main": "index.js",
+    "author": "p1atdev",
+    "license": "MIT",
+    "scripts": {
+        "start": "ts-node src/main.ts",
+        "build": "tsc"
+    },
+    "dependencies": {
+        "firebase": "9.6.10",
+        "firebase-admin": "^10.0.2",
+        "typescript": "^4.6.3"
+    },
+    "devDependencies": {
+        "dotenv": "^16.0.0",
+        "ts-dotenv": "^0.8.3",
+        "ts-node": "^10.7.0"
+    }
+}
