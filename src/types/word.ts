@@ -1,6 +1,6 @@
-import { Translate } from "./translate"
+import { Translation } from "./translation"
 
 export type Word = {
-    word: Translate
-    meaning: Translate
+    word: Translation
+    meaning: Translation
 }

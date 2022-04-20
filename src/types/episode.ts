@@ -1,17 +1,27 @@
 import { Transcript } from "./transcript"
-import { Translate } from "./translate"
+import { Translation } from "./translation"
 import { Word } from "./word"
 
 export type Episode = {
     /**
+     * Episode number
+     */
+    number: string
+
+    /**
+     * Date
+     */
+    date: Date
+
+    /**
      * The story…
      */
-    title: Translate
+    title: Translation
     videoUrl: string
     /**
      * Learn language related to…
      */
-    category: Translate
+    category: Translation
     /**
      * Need-to-know language…
      */
@@ -19,7 +29,7 @@ export type Episode = {
     /**
      * Answer this…
      */
-    question: Translate
+    question: Translation
     /**
      * Transcript
      */
@@ -27,5 +37,5 @@ export type Episode = {
     /**
      * Did you get it?
      */
-    answer: Translate
+    answer: Translation[]
 }

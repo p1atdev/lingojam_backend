@@ -1,4 +1,4 @@
-export type Translate = {
+export type Translation = {
     en: string
     ja: string
 }
