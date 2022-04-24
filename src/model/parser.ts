@@ -21,14 +21,6 @@ export class Parser {
         this.translator = new Translator()
     }
 
-    // async getTranslate(element: Element | Element[]): Promise<Translation | Translation[] | undefined> {
-    //     if (Array.isArray(element)) {
-    //         return await this.translator.enToJaTexts(element.map((e) => e.textContent ?? "ERROR"))
-    //     } else {
-    //         return await this.translator.enToJaText(element.textContent ?? "ERROR")
-    //     }
-    // }
-
     parseToContent() {
         const content = this.document.querySelector("div.widget.widget-richtext div.text")
 
@@ -46,8 +38,9 @@ export class Parser {
             const episodeNumber = this.parseEpisodeNumber()
             const date = this.parseDate()
 
-            const [mediaSet, title, category, words, question, transcript, answer] = await Promise.all([
-                this.parseMediaURL(),
+            const [media, title, category, words, question, transcript, answer] = await Promise.all([
+                // this.parseMediaURL(),
+                this.parseMediaIds(),
                 this.parseTitle(elements),
                 this.parseCategory(elements),
                 this.parseWords(elements),
@@ -60,8 +53,8 @@ export class Parser {
                 number: episodeNumber,
                 date: date,
                 title: title,
-                videoUrl: mediaSet.video,
-                thumbnailUrl: mediaSet.thumbnail,
+                pid: media.pid,
+                vid: media.vid,
                 category: category,
                 words: words,
                 question: question,
@@ -103,6 +96,28 @@ export class Parser {
 
         const date = parse(dateText, "d MMM yyyy", new Date())
         return date
+    }
+
+    parseMediaIds = async () => {
+        const pid = this.document.querySelector("div.video")?.getAttribute("data-pid")
+        if (!pid) {
+            throw new Error("No data-pid")
+        }
+
+        const xmlUrl = `https://www.bbc.co.uk/learningenglish/playlist/${pid}`
+        const xml = await $fetch(xmlUrl)
+
+        const xmlDoc = new JSDOM(xml).window.document
+        const vid = xmlDoc.querySelector("mediator")?.getAttribute("identifier")
+
+        if (!vid) {
+            throw new Error("No vid")
+        }
+
+        return {
+            pid: pid,
+            vid: vid,
+        }
     }
 
     parseMediaURL = async () => {

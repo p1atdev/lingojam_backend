@@ -18,15 +18,24 @@ export type Episode = {
      */
     title: Translation
 
-    /**
-     * Video MPD file URL
-     */
-    videoUrl: string
+    // /**
+    //  * Video MPD file URL
+    //  */
+    // videoUrl: string
+
+    // /**
+    //  * Thumbnail MPD image URL
+    //  */
+    // thumbnailUrl: string
 
     /**
-     * Thumbnail MPD image URL
+     * pid
      */
-    thumbnailUrl: string
+    pid: string
+    /**
+     * video id
+     */
+    vid: string
 
     /**
      * Learn language related to…

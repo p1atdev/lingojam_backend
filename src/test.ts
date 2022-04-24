@@ -1,7 +1,6 @@
 import "./util/firebase/init"
 import { Parser } from "./model/parser"
 import { $fetch } from "ohmyfetch"
-import puppeteer from "puppeteer"
 
 const robotURL = "https://www.bbc.co.uk/learningenglish/english/features/lingohack_2022/ep-230420"
 const charlotteURL = "https://www.bbc.co.uk/learningenglish/english/features/lingohack_2022/ep-220413"
