@@ -8,7 +8,8 @@
         "start": "ts-node src/server.ts",
         "dev": "ts-node-dev --respawn src/server.ts",
         "build": "tsc",
-        "test": "ts-node src/test.ts"
+        "test": "ts-node src/test.ts",
+        "push": "ts-node src/push.ts"
     },
     "dependencies": {
         "@google-cloud/translate": "^6.3.1",

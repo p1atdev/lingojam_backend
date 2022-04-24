@@ -10,7 +10,7 @@ export class DB {
         return episodes
     }
 
-    async createEpisode(episode: Episode, id: string) {
+    async addEpisode(episode: Episode, id: string) {
         return await db.collection(episodesRef).doc(id).set(episode)
     }
 }

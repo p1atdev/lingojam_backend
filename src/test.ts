@@ -1,4 +1,3 @@
-import "./util/firebase/init"
 import { Parser } from "./model/parser"
 import { $fetch } from "ohmyfetch"
 
