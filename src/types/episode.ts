@@ -17,7 +17,17 @@ export type Episode = {
      * The story…
      */
     title: Translation
+
+    /**
+     * Video MPD file URL
+     */
     videoUrl: string
+
+    /**
+     * Thumbnail MPD image URL
+     */
+    thumbnailUrl: string
+
     /**
      * Learn language related to…
      */

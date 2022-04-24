@@ -1,6 +1,8 @@
 import { parse } from "date-fns"
 import { JSDOM } from "jsdom"
+import { $fetch } from "ohmyfetch"
 import { Episode } from "../types/episode"
+import { MediaSet } from "../types/mediaset"
 import { Sentence, Transcript } from "../types/transcript"
 import { Translation } from "../types/translation"
 import { Word } from "../types/word"
@@ -42,10 +44,10 @@ export class Parser {
 
         try {
             const episodeNumber = this.parseEpisodeNumber()
-            const videoUrl = this.parseVideoURL()
             const date = this.parseDate()
 
-            const [title, category, words, question, transcript, answer] = await Promise.all([
+            const [mediaSet, title, category, words, question, transcript, answer] = await Promise.all([
+                this.parseMediaURL(),
                 this.parseTitle(elements),
                 this.parseCategory(elements),
                 this.parseWords(elements),
@@ -58,7 +60,8 @@ export class Parser {
                 number: episodeNumber,
                 date: date,
                 title: title,
-                videoUrl: videoUrl!,
+                videoUrl: mediaSet.video,
+                thumbnailUrl: mediaSet.thumbnail,
                 category: category,
                 words: words,
                 question: question,
@@ -102,23 +105,15 @@ export class Parser {
         return date
     }
 
-    parseVideoURL = (): string | null => {
-        const iframe = this.document.querySelector("iframe")?.innerHTML
-        console.log(iframe)
-        console.log(iframe?.includes("568ec290-626e-4ddb-83fa-6b52928eb728"))
-        return ""
+    parseMediaURL = async () => {
+        const dataPid = this.document.querySelector("div.video")?.getAttribute("data-pid")
+        if (!dataPid) {
+            throw new Error("No data-pid")
+        }
 
-        // const document = this.document.querySelector("iframe#smphtml5iframebbcMediaPlayer0")
-        // if (!document) {
-        //     throw new Error("No content")
-        // }
+        const mediaSet = await this.getMediaSet(dataPid)
 
-        // const videoEl = this.document.querySelector("video.p_transform")
-        // if (!videoEl) {
-        //     throw new Error("No video element")
-        // }
-
-        // return videoEl.getAttribute("src")
+        return mediaSet
     }
 
     parseTitle = async (elements: Element[]): Promise<Translation> => {
@@ -260,5 +255,35 @@ export class Parser {
 
         // console.log(answer)
         return answer
+    }
+
+    getMediaSet = async (pid: string) => {
+        const xmlUrl = `https://www.bbc.co.uk/learningenglish/playlist/${pid}`
+        const xml = await $fetch(xmlUrl)
+
+        const xmlDoc = new JSDOM(xml).window.document
+        const vid = xmlDoc.querySelector("mediator")?.getAttribute("identifier")
+
+        const mediaUrl = `https://open.live.bbc.co.uk/mediaselector/6/select/version/2.0/mediaset/pc/vpid/${vid}/format/json`
+        const mediaSet: MediaSet = await $fetch(mediaUrl)
+
+        const thumbnail = mediaSet.media
+            .find((m) => m.kind === "thumbnails")
+            ?.connection.filter((c) => c.protocol === "https")
+            .sort((a, b) => parseInt(a.priority) - parseInt(b.priority))[0]
+
+        const video = mediaSet.media
+            .find((m) => m.kind === "video")
+            ?.connection.filter((c) => c.protocol === "https")
+            .filter((c) => c.transferFormat === "dash")[0]
+
+        if (!thumbnail || !video) {
+            throw new Error("No media")
+        }
+
+        return {
+            thumbnail: thumbnail.href,
+            video: video.href,
+        }
     }
 }
