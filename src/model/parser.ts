@@ -100,16 +100,6 @@ export class Parser {
         return date
     }
 
-    // parseThumbnailURL = () => {
-    //     const srcset = this.document.querySelector("img.p_holding_image")?.getAttribute("srcset")
-    //     if (!srcset) {
-    //         throw new Error("No srcset")
-    //     }
-    //     const srcs = srcset.split(",").map((src) => src.split(" ")[0])
-    //     const src = srcs[srcs.length - 1]
-    //     return src
-    // }
-
     parseMediaIds = async () => {
         const pid = this.document.querySelector("div.video")?.getAttribute("data-pid")
         if (!pid) {
@@ -144,6 +134,7 @@ export class Parser {
     }
 
     parseTitle = async (elements: Element[]): Promise<Translation> => {
+        // console.log("parseTitle")
         const titleEl = getSentence(elements, "The story")
         if (!titleEl) {
             throw new Error("No title")
@@ -152,11 +143,12 @@ export class Parser {
             throw new Error("No title text")
         }
         const title: Translation = await this.translator.enToJaText(titleEl.textContent)
-        // console.log(title)
+        // console.log("title:", title)
         return title
     }
 
     parseCategory = async (elements: Element[]): Promise<Translation> => {
+        // console.log("parseCategory")
         const categoryEl = getSentence(elements, "Learn language related to")
         if (!categoryEl) {
             throw "No category"
@@ -165,11 +157,12 @@ export class Parser {
             throw "No category text"
         }
         const category: Translation = await this.translator.enToJaText(categoryEl.textContent)
-        // console.log(category)
+        // console.log("category:", category)
         return category
     }
 
     parseWords = async (elements: Element[]): Promise<Word[]> => {
+        // console.log("parseWords")
         const wordEls = getSentences(elements, "Need-to-know language", "Answer this")
         if (!wordEls) {
             throw new Error("No words")
@@ -179,30 +172,47 @@ export class Parser {
             await Promise.all(
                 wordEls
                     .filter((e) => e.tagName == "P")
-                    .map(async (wordText) => {
-                        const text = wordText.textContent
+                    .map(async (wordEl) => {
+                        const text = wordEl.textContent
                         if (!text) {
                             return
                         }
 
-                        const [word, meaning] = text.split("–").map((s) => s.trim())
+                        const word = wordEl.querySelector("strong")?.textContent?.trim()
 
-                        return {
+                        if (!word) {
+                            return
+                        }
+
+                        // const meaning = text.split("–").map((s) => s.trim())
+                        const meaning = text.replace(word, "").replace(/[–-]/, "").trim()
+
+                        // console.log({
+                        //     word,
+                        //     meaning,
+                        // })
+
+                        const pair = {
                             word: await this.translator.enToJaText(word),
                             meaning: await this.translator.enToJaText(meaning),
                         }
+
+                        // console.log(pair)
+
+                        return pair
                     })
             )
         ).filter((s): s is Word => {
             return s != undefined && s != null
         })
 
-        // console.log(wordPairs)
+        // console.log("wordPairs:", wordPairs)
 
         return wordPairs
     }
 
     parseQuestion = async (elements: Element[]): Promise<Translation> => {
+        // console.log("parseQuestion")
         const questionEl = getSentence(elements, "Answer this")
         if (!questionEl) {
             throw new Error("No question")
@@ -211,12 +221,15 @@ export class Parser {
             throw new Error("No question text")
         }
         const question: Translation = await this.translator.enToJaText(questionEl.textContent)
-        // console.log(question)
+        // console.log("question:", question)
         return question
     }
 
     parseTranscript = async (elements: Element[]): Promise<Transcript> => {
-        const transcriptEl = getSentences(elements, "Transcript", "Did you get it?")
+        // console.log("parseTranscript")
+        const transcriptEl =
+            getSentences(elements, "Transcript", "Did you get it?") ??
+            getSentences(elements, "Transcript", "Answer this")
         if (!transcriptEl) {
             throw new Error("No transcript")
         }
@@ -236,7 +249,7 @@ export class Parser {
             await Promise.all(
                 transcriptEl
                     .filter((e) => e.tagName == "P")
-                    .flatMap(async (text) => {
+                    .map(async (text) => {
                         // console.log("text:", text)
                         // console.log("text.tagName:", text.tagName)
                         // console.log("text.textContent:", text.textContent)
@@ -245,6 +258,14 @@ export class Parser {
                         const headingText = strongs.find((s) => text.textContent?.startsWith(s))
                         if (headingText) {
                             // if with heading
+
+                            // console.log("headingText:", headingText)
+
+                            // console.log({
+                            //     heading: headingText,
+                            //     content: text.textContent?.replace(headingText, "").trim(),
+                            //     textContent: text.textContent,
+                            // })
 
                             const heading: Sentence = {
                                 type: "heading",
@@ -255,6 +276,8 @@ export class Parser {
                             if (!content) {
                                 return
                             }
+
+                            // console.log("content:", content)
 
                             const sentence: Sentence = {
                                 type: "paragraph",
@@ -270,6 +293,11 @@ export class Parser {
                                 return
                             }
 
+                            // console.log("content:", content)
+                            // console.log({
+                            //     content: content,
+                            // })
+
                             const sentence: Sentence = {
                                 type: "paragraph",
                                 text: await this.translator.enToJaText(content),
@@ -278,6 +306,7 @@ export class Parser {
                             return sentence
                         }
                     })
+                    .flat()
             )
         ).filter((s): s is Sentence => {
             return s != undefined && s != null
@@ -292,17 +321,26 @@ export class Parser {
     }
 
     parseAnswer = async (elements: Element[]): Promise<Translation[]> => {
+        // console.log("parseAnswer")
         const answerEls = (() => {
             const answerIndex = elements.findIndex((e) => e.textContent == "Did you get it?")
-            if (answerIndex == -1) {
-                return undefined
-            }
 
-            return elements.slice(answerIndex + 2)
+            if (answerIndex == -1) {
+                // BBCが悪い。Did you get it?を誤ってAnswer this…にしている。
+                const answerThisEls = elements.filter((e) => e.textContent?.startsWith("Answer this"))
+                if (answerThisEls.length > 1) {
+                    const index = elements.indexOf(answerThisEls[1])
+                    return elements.slice(index + 2)
+                }
+            } else {
+                return elements.slice(answerIndex + 2)
+            }
         })()
         if (!answerEls) {
-            throw "No answer"
+            // throw Error("No answer")
+            return []
         }
+
         const answer: Translation[] = (
             await Promise.all(
                 answerEls.map(async (e) => {
@@ -316,7 +354,7 @@ export class Parser {
             return s != undefined && s != null
         })
 
-        // console.log(answer)
+        // console.log("answer:", answer)
         return answer
     }
 
