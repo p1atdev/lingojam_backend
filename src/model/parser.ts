@@ -27,7 +27,9 @@ export class Parser {
         return content
     }
 
-    async parseToEpisode() {
+    async parseToEpisode(thumbnailUrl: string) {
+        console.log(thumbnailUrl)
+
         const document = this.parseToContent()
         if (!document) {
             return null
@@ -39,7 +41,6 @@ export class Parser {
             const date = this.parseDate()
 
             const [media, title, category, words, question, transcript, answer] = await Promise.all([
-                // this.parseMediaURL(),
                 this.parseMediaIds(),
                 this.parseTitle(elements),
                 this.parseCategory(elements),
@@ -53,6 +54,7 @@ export class Parser {
                 number: episodeNumber,
                 date: date,
                 title: title,
+                thumbnailUrl: thumbnailUrl,
                 pid: media.pid,
                 vid: media.vid,
                 category: category,
@@ -98,6 +100,16 @@ export class Parser {
         return date
     }
 
+    // parseThumbnailURL = () => {
+    //     const srcset = this.document.querySelector("img.p_holding_image")?.getAttribute("srcset")
+    //     if (!srcset) {
+    //         throw new Error("No srcset")
+    //     }
+    //     const srcs = srcset.split(",").map((src) => src.split(" ")[0])
+    //     const src = srcs[srcs.length - 1]
+    //     return src
+    // }
+
     parseMediaIds = async () => {
         const pid = this.document.querySelector("div.video")?.getAttribute("data-pid")
         if (!pid) {
@@ -132,7 +144,7 @@ export class Parser {
     }
 
     parseTitle = async (elements: Element[]): Promise<Translation> => {
-        const titleEl = getSentence(elements, "The story…")
+        const titleEl = getSentence(elements, "The story")
         if (!titleEl) {
             throw new Error("No title")
         }
@@ -145,7 +157,7 @@ export class Parser {
     }
 
     parseCategory = async (elements: Element[]): Promise<Translation> => {
-        const categoryEl = getSentence(elements, "Learn language related to…")
+        const categoryEl = getSentence(elements, "Learn language related to")
         if (!categoryEl) {
             throw "No category"
         }
@@ -158,7 +170,7 @@ export class Parser {
     }
 
     parseWords = async (elements: Element[]): Promise<Word[]> => {
-        const wordEls = getSentences(elements, "Need-to-know language…", "Answer this…")
+        const wordEls = getSentences(elements, "Need-to-know language", "Answer this")
         if (!wordEls) {
             throw new Error("No words")
         }
@@ -191,7 +203,7 @@ export class Parser {
     }
 
     parseQuestion = async (elements: Element[]): Promise<Translation> => {
-        const questionEl = getSentence(elements, "Answer this…")
+        const questionEl = getSentence(elements, "Answer this")
         if (!questionEl) {
             throw new Error("No question")
         }
@@ -209,26 +221,62 @@ export class Parser {
             throw new Error("No transcript")
         }
 
+        const strongs = transcriptEl
+            .filter((e) => e.tagName == "STRONG")
+            .map((e) => {
+                return e.textContent?.trim()
+            })
+            .filter((s): s is string => {
+                return s != undefined && s != null
+            })
+
+        // console.log("strongs", strongs)
+
         const sentences = (
             await Promise.all(
                 transcriptEl
                     .filter((e) => e.tagName == "P")
-                    .map(async (text) => {
-                        // console.log("sentence:", sentence)
-                        // console.log("sentence.tagName:", sentence.tagName)
-                        // console.log("sentence.textContent:", sentence.textContent)
+                    .flatMap(async (text) => {
+                        // console.log("text:", text)
+                        // console.log("text.tagName:", text.tagName)
+                        // console.log("text.textContent:", text.textContent)
+                        // console.log("text.innerHTML:", text.innerHTML)
 
-                        const content = text.textContent
-                        if (!content) {
-                            return
+                        const headingText = strongs.find((s) => text.textContent?.startsWith(s))
+                        if (headingText) {
+                            // if with heading
+
+                            const heading: Sentence = {
+                                type: "heading",
+                                text: await this.translator.enToJaText(headingText),
+                            }
+
+                            const content = text.textContent
+                            if (!content) {
+                                return
+                            }
+
+                            const sentence: Sentence = {
+                                type: "paragraph",
+                                text: await this.translator.enToJaText(content.replace(headingText, "").trim()),
+                            }
+
+                            return [heading, sentence]
+                        } else {
+                            // if only paragraph
+
+                            const content = text.textContent
+                            if (!content) {
+                                return
+                            }
+
+                            const sentence: Sentence = {
+                                type: "paragraph",
+                                text: await this.translator.enToJaText(content),
+                            }
+
+                            return sentence
                         }
-
-                        const sentence: Sentence = {
-                            text: await this.translator.enToJaText(content),
-                            type: text.innerHTML.startsWith("<strong>") ? "heading" : "paragraph",
-                        }
-
-                        return sentence
                     })
             )
         ).filter((s): s is Sentence => {

@@ -11,28 +11,28 @@ async function main() {
 
     const db = new DB()
 
-    const dbEpisodes = await db.getAllEpisodes()
+    // const dbEpisodes = await db.getAllEpisodes()
 
     await Promise.all(
         bbcEpisodes.map(async (ep) => {
-            if (dbEpisodes.findIndex((dbEp) => dbEp.title.en === ep.title) === -1) {
-                if (!ep.url) {
-                    throw new Error("No url")
-                }
-
-                try {
-                    const episode = await getEpisode("https://www.bbc.co.uk" + ep.url)
-
-                    await db.addEpisode(episode, episode.pid)
-                } catch (err) {
-                    console.error(err)
-                }
+            // if (dbEpisodes.findIndex((dbEp) => dbEp.title.en === ep.title) === -1) {
+            if (!ep.url) {
+                throw new Error("No url")
             }
+
+            try {
+                const episode = await getEpisode("https://www.bbc.co.uk" + ep.url, ep.thumbnailUrl)
+
+                await db.addEpisode(episode, episode.pid)
+            } catch (err) {
+                console.error(err)
+            }
+            // }
         })
     )
 }
 
-async function getEpisode(url: string) {
+async function getEpisode(url: string, thumbnailUrl: string = "") {
     console.log(url)
 
     const html = await $fetch(url, {
@@ -41,7 +41,7 @@ async function getEpisode(url: string) {
 
     const parser = new Parser(html)
 
-    const episode = await parser.parseToEpisode()
+    const episode = await parser.parseToEpisode(thumbnailUrl)
 
     if (!episode) {
         throw new Error("Failed to get episode")
