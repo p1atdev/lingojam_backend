@@ -11,7 +11,7 @@ export type Episode = {
     /**
      * Date
      */
-    date: Date
+    date: string
 
     /**
      * The story…

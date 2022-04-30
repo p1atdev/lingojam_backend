@@ -1,4 +1,4 @@
-import { parse } from "date-fns"
+import { format, parse } from "date-fns"
 import { JSDOM } from "jsdom"
 import { $fetch } from "ohmyfetch"
 import { Episode } from "../types/episode"
@@ -83,7 +83,7 @@ export class Parser {
         return numberEl.innerHTML.split(" ")[1]
     }
 
-    parseDate = (): Date => {
+    parseDate = (): string => {
         const document = this.parseToContent()
         if (!document) {
             throw new Error("No document")
@@ -97,7 +97,7 @@ export class Parser {
         const dateText = dateEl.textContent?.split("/")[1].trim() ?? ""
 
         const date = parse(dateText, "d MMM yyyy", new Date())
-        return date
+        return format(date, "yyy/MM/dd")
     }
 
     parseMediaIds = async () => {
