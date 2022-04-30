@@ -13,10 +13,10 @@ export const getSentences = (elements: Element[], after: string, before: string)
         console.log(`No sentence: ${after}`)
         return
     }
-    const endIndex = elements.findIndex((e) => e.textContent?.includes(before))
+    const endIndex = elements.slice(startIndex).findIndex((e) => e.textContent?.includes(before))
     if (endIndex == -1) {
         console.log(`No sentence: ${before}`)
         return
     }
-    return elements.slice(startIndex + 2, endIndex)
+    return elements.slice(startIndex + 2, startIndex + endIndex)
 }

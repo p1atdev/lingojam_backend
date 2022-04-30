@@ -33,7 +33,8 @@ async function main() {
             // const episode = await parser.parseToEpisode(bbcEpisodes[0].thumbnailUrl)
             const episode = await parser.parseToEpisode(ep.thumbnailUrl)
 
-            // console.dir(episode?.title, { depth: null })
+            // console.dir(episode?.transcript, { depth: null })
+            // console.dir(episode?.answer, { depth: null })
             return episode
         })
     )

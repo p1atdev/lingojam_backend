@@ -306,11 +306,12 @@ export class Parser {
                             return sentence
                         }
                     })
-                    .flat()
             )
-        ).filter((s): s is Sentence => {
-            return s != undefined && s != null
-        })
+        )
+            .flat()
+            .filter((s): s is Sentence => {
+                return s != undefined && s != null
+            })
 
         const transcript: Transcript = {
             sentences: sentences,
@@ -327,7 +328,9 @@ export class Parser {
 
             if (answerIndex == -1) {
                 // BBCが悪い。Did you get it?を誤ってAnswer this…にしている。
-                const answerThisEls = elements.filter((e) => e.textContent?.startsWith("Answer this"))
+                const answerThisEls = elements
+                    .filter((e) => e.tagName === "H3")
+                    .filter((e) => e.textContent?.startsWith("Answer this"))
                 if (answerThisEls.length > 1) {
                     const index = elements.indexOf(answerThisEls[1])
                     return elements.slice(index + 2)
