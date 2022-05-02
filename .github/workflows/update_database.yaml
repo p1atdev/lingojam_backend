@@ -1,0 +1,16 @@
+on:
+  schedule:
+    # 毎週火曜日5:00に実行(UTC) 
+    - cron:  '0 0 5 * MON'
+
+jobs:
+  update-database:
+    runs-on: ubuntu-latest
+    name: Update database 
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    - run: yarn install
+    - run: yarn push
