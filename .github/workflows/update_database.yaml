@@ -15,16 +15,15 @@ jobs:
     environment: production
     steps:
     - uses: actions/checkout@v3
-    - name: Set ENV
-      run: |
-        echo "FIREBASE_ADMIN_PROJECT_ID=$FIREBASE_ADMIN_PROJECT_ID" >> .env
-        echo "FIREBASE_ADMIN_PRIVATE_KEY=$FIREBASE_ADMIN_PRIVATE_KEY" >> .env
-        echo "FIREBASE_ADMIN_CLIENT_EMAIL=$FIREBASE_ADMIN_CLIENT_EMAIL" >> .env
-        echo "DEEPL_API_KEY=$DEEPL_API_KEY" >> .env
     - uses: actions/setup-node@v3
       with:
         node-version: 18
     - name: Push
+      env:
+            FIREBASE_ADMIN_PROJECT_ID: ${{ secrets.FIREBASE_ADMIN_PROJECT_ID }}
+            FIREBASE_ADMIN_PRIVATE_KEY: ${{ secrets.FIREBASE_ADMIN_PRIVATE_KEY }}
+            FIREBASE_ADMIN_CLIENT_EMAIL: ${{ secrets.FIREBASE_ADMIN_CLIENT_EMAIL }}
+            DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
       run: |
         yarn install
         yarn push
