@@ -1,3 +1,5 @@
+name: Update database
+
 on:
   schedule:
     # 毎週火曜日5:00に実行(UTC) 
@@ -12,5 +14,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
-    - run: yarn install
-    - run: yarn push
+    - name: Push
+      run: |
+        yarn install
+        yarn push
