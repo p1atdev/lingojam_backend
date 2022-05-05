@@ -1,9 +1,11 @@
 name: Update database
 
 on:
+  workflow_dispatch:
+  
   schedule:
     # 毎週火曜日5:00に実行(UTC) 
-    - cron:  '0 0 5 * MON'
+    - cron:  '0 0 5 * TUE'
   push:
     branches:
       - main
